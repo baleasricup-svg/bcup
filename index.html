@@ -1,0 +1,2071 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>VoleyKas — Keuangan Turnamen Bola Voli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg:        #0f1117;
+  --surface:   #181c27;
+  --surface2:  #1f2435;
+  --border:    #2a3045;
+  --border2:   #3a4460;
+  --text:      #e8ecf4;
+  --text2:     #8892aa;
+  --text3:     #5a6480;
+  --accent:    #f5a623;
+  --accent2:   #ffd280;
+  --green:     #2dd4a0;
+  --red:       #f26b6b;
+  --blue:      #5b8dee;
+  --purple:    #a78bfa;
+  --radius:    10px;
+  --radius-lg: 16px;
+  --font:      'DM Sans', sans-serif;
+  --mono:      'DM Mono', monospace;
+  --shadow:    0 4px 24px rgba(0,0,0,0.35);
+  --transition: 0.18s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  font-size:14px;
+  line-height:1.5;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;}
+
+/* ── LOCK SCREEN ── */
+#lockScreen{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:24px;
+}
+.lock-logo{
+  font-size:2.4rem;font-weight:700;letter-spacing:-1px;
+  color:var(--text);
+}
+.lock-logo span{color:var(--accent);}
+.lock-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:32px;width:340px;
+  box-shadow:var(--shadow);
+}
+.lock-card h2{font-size:1rem;font-weight:600;margin-bottom:4px;}
+.lock-card p{font-size:.8rem;color:var(--text2);margin-bottom:20px;}
+
+/* ── SETUP MODAL ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:8000;
+  background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:16px;
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:28px;width:100%;max-width:460px;
+  box-shadow:var(--shadow);max-height:90vh;overflow-y:auto;
+}
+.modal-box h3{font-size:1rem;font-weight:700;margin-bottom:4px;}
+.modal-box .modal-sub{font-size:.8rem;color:var(--text2);margin-bottom:20px;}
+.modal-close{
+  float:right;background:none;border:none;color:var(--text2);
+  font-size:1.2rem;cursor:pointer;padding:2px 6px;
+  border-radius:6px;transition:var(--transition);
+}
+.modal-close:hover{background:var(--border);color:var(--text);}
+
+/* ── LAYOUT ── */
+#app{display:none;min-height:100vh;}
+.sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:220px;
+  background:var(--surface);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;
+  transition:transform var(--transition);
+}
+.sidebar-logo{
+  padding:24px 20px 16px;
+  font-size:1.1rem;font-weight:700;letter-spacing:-0.5px;
+  border-bottom:1px solid var(--border);
+  color:var(--text);
+}
+.sidebar-logo span{color:var(--accent);}
+.sidebar-tournament{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-tournament label{
+  font-size:.65rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.8px;
+  color:var(--text3);display:block;margin-bottom:6px;
+}
+.tournament-select{
+  width:100%;padding:7px 10px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);border-radius:var(--radius);
+  font-family:var(--font);font-size:.8rem;cursor:pointer;
+}
+.tournament-select:focus{outline:none;border-color:var(--accent);}
+.btn-new-tournament{
+  width:100%;margin-top:8px;padding:7px;
+  background:transparent;border:1px dashed var(--border2);
+  color:var(--text2);border-radius:var(--radius);
+  font-family:var(--font);font-size:.78rem;
+  cursor:pointer;transition:var(--transition);
+}
+.btn-new-tournament:hover{border-color:var(--accent);color:var(--accent);}
+.nav-list{flex:1;padding:12px 10px;overflow-y:auto;}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:var(--radius);
+  color:var(--text2);font-size:.85rem;font-weight:500;
+  cursor:pointer;transition:var(--transition);margin-bottom:2px;
+  user-select:none;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{
+  background:rgba(245,166,35,0.12);
+  color:var(--accent);
+}
+.nav-item .nav-icon{font-size:1rem;width:20px;text-align:center;}
+.sidebar-bottom{
+  padding:12px 16px;border-top:1px solid var(--border);
+}
+.sync-badge{
+  display:flex;align-items:center;gap:6px;
+  font-size:.72rem;color:var(--text3);
+  padding:6px 8px;border-radius:6px;
+  background:var(--surface2);
+}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+.sync-dot.online{background:var(--green);}
+.sync-dot.offline{background:var(--red);}
+
+.main{margin-left:220px;padding:28px;min-height:100vh;}
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── TOP BAR ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:24px;flex-wrap:wrap;gap:12px;
+}
+.topbar-title{font-size:1.3rem;font-weight:700;letter-spacing:-.4px;}
+.topbar-title small{
+  display:block;font-size:.75rem;font-weight:400;
+  color:var(--text2);margin-top:2px;
+}
+
+/* ── CARDS ── */
+.card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:20px;
+}
+.card-title{
+  font-size:.7rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.8px;
+  color:var(--text3);margin-bottom:12px;
+}
+
+/* ── STAT GRID ── */
+.stat-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;margin-bottom:24px;
+}
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  padding:18px 20px;
+  position:relative;overflow:hidden;
+  transition:transform var(--transition),box-shadow var(--transition);
+}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);}
+.stat-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:var(--accent);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+}
+.stat-card.green::before{background:var(--green);}
+.stat-card.red::before{background:var(--red);}
+.stat-card.blue::before{background:var(--blue);}
+.stat-card.purple::before{background:var(--purple);}
+.stat-label{font-size:.7rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;}
+.stat-value{
+  font-size:1.35rem;font-weight:700;margin-top:6px;
+  font-family:var(--mono);
+}
+.stat-card.green .stat-value{color:var(--green);}
+.stat-card.red .stat-value{color:var(--red);}
+.stat-card.blue .stat-value{color:var(--blue);}
+.stat-card.purple .stat-value{color:var(--purple);}
+.stat-sub{font-size:.72rem;color:var(--text3);margin-top:4px;}
+
+/* ── GRAND TOTAL ── */
+.grand-total-card{
+  background:linear-gradient(135deg,#1a2040 0%,#0f1117 100%);
+  border:1px solid var(--accent);
+  border-radius:var(--radius-lg);
+  padding:24px 28px;margin-bottom:24px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;
+  position:relative;overflow:hidden;
+}
+.grand-total-card::after{
+  content:'🏐';
+  position:absolute;right:20px;top:50%;transform:translateY(-50%);
+  font-size:4rem;opacity:.07;
+}
+.grand-total-label{font-size:.75rem;font-weight:600;color:var(--accent2);text-transform:uppercase;letter-spacing:.8px;}
+.grand-total-value{font-size:2rem;font-weight:700;color:var(--accent);font-family:var(--mono);margin-top:4px;}
+.grand-total-meta{font-size:.75rem;color:var(--text2);margin-top:6px;}
+
+/* ── TABLES ── */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+thead th{
+  text-align:left;padding:10px 14px;
+  font-size:.68rem;font-weight:600;
+  text-transform:uppercase;letter-spacing:.6px;
+  color:var(--text3);
+  border-bottom:1px solid var(--border);
+  white-space:nowrap;
+}
+tbody tr{border-bottom:1px solid var(--border);transition:background var(--transition);}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:var(--surface2);}
+tbody td{padding:11px 14px;color:var(--text2);}
+tbody td.mono{font-family:var(--mono);color:var(--text);}
+tbody td strong{color:var(--text);}
+.badge{
+  display:inline-block;padding:2px 8px;
+  border-radius:99px;font-size:.7rem;font-weight:600;
+}
+.badge.lunas{background:rgba(45,212,160,.15);color:var(--green);}
+.badge.belum{background:rgba(242,107,107,.15);color:var(--red);}
+.badge.income{background:rgba(45,212,160,.15);color:var(--green);}
+.badge.expense{background:rgba(242,107,107,.15);color:var(--red);}
+
+/* ── FORMS ── */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:.75rem;font-weight:600;color:var(--text2);}
+.form-control{
+  padding:9px 12px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  color:var(--text);
+  border-radius:var(--radius);
+  font-family:var(--font);font-size:.85rem;
+  transition:border-color var(--transition),box-shadow var(--transition);
+}
+.form-control:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(245,166,35,.12);
+}
+select.form-control{cursor:pointer;}
+select.form-control option{background:var(--surface2);}
+textarea.form-control{resize:vertical;min-height:80px;}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:9px 18px;border-radius:var(--radius);
+  font-family:var(--font);font-size:.83rem;font-weight:600;
+  cursor:pointer;border:none;transition:var(--transition);
+  display:inline-flex;align-items:center;gap:6px;
+}
+.btn-primary{background:var(--accent);color:#0f1117;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--border2);background:var(--border);}
+.btn-danger{background:rgba(242,107,107,.15);color:var(--red);border:1px solid rgba(242,107,107,.3);}
+.btn-danger:hover{background:rgba(242,107,107,.25);}
+.btn-sm{padding:5px 12px;font-size:.75rem;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+
+/* ── SECTION HEADER ── */
+.section-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;flex-wrap:wrap;gap:10px;
+}
+.section-header h3{font-size:.95rem;font-weight:700;}
+
+/* ── DIVIDER ── */
+.divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+
+/* ── EMPTY STATE ── */
+.empty-state{
+  text-align:center;padding:48px 20px;color:var(--text3);
+}
+.empty-state .empty-icon{font-size:2.5rem;margin-bottom:12px;}
+.empty-state p{font-size:.85rem;}
+
+/* ── TOAST ── */
+#toastContainer{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  display:flex;flex-direction:column;gap:8px;
+}
+.toast{
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--radius);padding:12px 16px;
+  font-size:.82rem;min-width:240px;max-width:340px;
+  box-shadow:var(--shadow);
+  animation:slideIn .2s ease;
+}
+.toast.success{border-left:3px solid var(--green);}
+.toast.error{border-left:3px solid var(--red);}
+.toast.info{border-left:3px solid var(--blue);}
+@keyframes slideIn{from{transform:translateX(20px);opacity:0;}to{transform:translateX(0);opacity:1;}}
+
+/* ── TICKET DAILY ── */
+.ticket-day-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:12px;margin-bottom:16px;
+}
+.ticket-input-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;
+}
+.ticket-input-card label{
+  font-size:.72rem;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.5px;
+  display:block;margin-bottom:8px;
+}
+.ticket-qty-row{
+  display:flex;align-items:center;gap:8px;
+}
+.ticket-qty-row input{
+  flex:1;padding:8px 10px;
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);border-radius:var(--radius);
+  font-family:var(--mono);font-size:1rem;font-weight:600;
+  text-align:center;
+}
+.ticket-qty-row input:focus{outline:none;border-color:var(--accent);}
+.ticket-price-note{font-size:.72rem;color:var(--text3);margin-top:5px;}
+
+/* ── PRICE SCHEDULE ── */
+.price-row{
+  display:grid;
+  grid-template-columns:140px 1fr 1fr 1fr auto;
+  gap:10px;align-items:center;
+  padding:10px 14px;
+  border-bottom:1px solid var(--border);
+}
+.price-row:last-child{border-bottom:none;}
+.price-row.header{
+  font-size:.68rem;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.5px;
+  padding:8px 14px;
+  border-bottom:1px solid var(--border);
+}
+
+/* ── SETTINGS ── */
+.settings-section{margin-bottom:28px;}
+.settings-section h4{
+  font-size:.78rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;
+  color:var(--text3);margin-bottom:14px;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+}
+
+/* ── STATUS MSG ── */
+.status-msg{
+  font-size:.8rem;padding:8px 12px;
+  border-radius:var(--radius);margin-top:10px;
+}
+.status-msg.success{background:rgba(45,212,160,.1);color:var(--green);}
+.status-msg.error{background:rgba(242,107,107,.1);color:var(--red);}
+.status-msg.warning{background:rgba(245,166,35,.1);color:var(--accent);}
+
+/* ── MOBILE ── */
+.hamburger{
+  display:none;position:fixed;top:14px;left:14px;z-index:200;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);border-radius:8px;padding:8px 10px;
+  cursor:pointer;font-size:1rem;
+}
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;padding:16px;padding-top:56px;}
+  .hamburger{display:block;}
+  .grand-total-value{font-size:1.5rem;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .price-row{grid-template-columns:1fr 1fr 1fr 1fr auto;font-size:.75rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOCK SCREEN ══════════════ -->
+<div id="lockScreen">
+  <div class="lock-logo">Voley<span>Kas</span></div>
+  <div class="lock-card" id="lockCard">
+    <h2>Masuk</h2>
+    <p>Masukkan password untuk membuka aplikasi</p>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Password</label>
+      <input type="password" class="form-control" id="lockPwdInput" placeholder="Password..." onkeydown="if(event.key==='Enter')doUnlock()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="doUnlock()">Buka Aplikasi</button>
+    <div id="lockStatus" class="status-msg" style="display:none;margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- ══════════════ SETUP MODAL ══════════════ -->
+<div class="modal-overlay" id="setupModal">
+  <div class="modal-box">
+    <h3>⚙️ Setup Awal</h3>
+    <p class="modal-sub">Hubungkan ke Supabase dan buat password untuk mengenkripsi kredensial Anda.</p>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Supabase URL</label>
+      <input type="text" class="form-control" id="setupUrl" placeholder="https://xxxx.supabase.co">
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Supabase Anon Key</label>
+      <input type="password" class="form-control" id="setupKey" placeholder="eyJhbGci...">
+    </div>
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Password Enkripsi</label>
+      <input type="password" class="form-control" id="setupPwd" placeholder="Min. 6 karakter">
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Konfirmasi Password</label>
+      <input type="password" class="form-control" id="setupPwd2" placeholder="Ulangi password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;" id="setupBtn" onclick="doSetup()">🔌 Hubungkan & Mulai</button>
+    <div id="setupStatus" class="status-msg" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ══════════════ ADD TRANSACTION MODAL ══════════════ -->
+<div class="modal-overlay" id="addTxModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addTxModal')">✕</button>
+    <h3 id="addTxTitle">Tambah Transaksi</h3>
+    <p class="modal-sub">Catat pemasukan atau pengeluaran di neraca utama.</p>
+    <input type="hidden" id="editTxId">
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>Tanggal</label>
+        <input type="date" class="form-control" id="txDate">
+      </div>
+      <div class="form-group">
+        <label>Jenis</label>
+        <select class="form-control" id="txType">
+          <option value="income">Pemasukan</option>
+          <option value="expense">Pengeluaran</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>Kategori</label>
+        <input type="text" class="form-control" id="txCategory" placeholder="cth: Hadiah, Sewa Lapangan">
+      </div>
+      <div class="form-group">
+        <label>Nominal (Rp)</label>
+        <input type="number" class="form-control" id="txAmount" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Keterangan</label>
+      <input type="text" class="form-control" id="txDesc" placeholder="Opsional">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveTx()">Simpan</button>
+      <button class="btn btn-secondary" onclick="closeModal('addTxModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADD SPONSOR MODAL ══════════════ -->
+<div class="modal-overlay" id="addSponsorModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addSponsorModal')">✕</button>
+    <h3 id="addSponsorTitle">Tambah Sponsor</h3>
+    <p class="modal-sub">Catat data pemasukan dari sponsor.</p>
+    <input type="hidden" id="editSponsorId">
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>Nama Sponsor</label>
+        <input type="text" class="form-control" id="sponsorName" placeholder="Nama perusahaan/individu">
+      </div>
+      <div class="form-group">
+        <label>Nominal (Rp)</label>
+        <input type="number" class="form-control" id="sponsorAmount" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>Tanggal Masuk</label>
+        <input type="date" class="form-control" id="sponsorDate">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-control" id="sponsorStatus">
+          <option value="lunas">Lunas</option>
+          <option value="belum">Belum Lunas</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Catatan</label>
+      <input type="text" class="form-control" id="sponsorNote" placeholder="Opsional">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveSponsor()">Simpan</button>
+      <button class="btn btn-secondary" onclick="closeModal('addSponsorModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADD TEAM MODAL ══════════════ -->
+<div class="modal-overlay" id="addTeamModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addTeamModal')">✕</button>
+    <h3 id="addTeamTitle">Tambah Pendaftaran Tim</h3>
+    <p class="modal-sub">Catat data pendaftaran tim peserta.</p>
+    <input type="hidden" id="editTeamId">
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>Nama Tim</label>
+        <input type="text" class="form-control" id="teamName" placeholder="Nama tim">
+      </div>
+      <div class="form-group">
+        <label>Nominal Pendaftaran (Rp)</label>
+        <input type="number" class="form-control" id="teamAmount" placeholder="0" min="0">
+      </div>
+    </div>
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label>Tanggal Daftar</label>
+        <input type="date" class="form-control" id="teamDate">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-control" id="teamStatus">
+          <option value="lunas">Lunas</option>
+          <option value="belum">Belum Lunas</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveTeam()">Simpan</button>
+      <button class="btn btn-secondary" onclick="closeModal('addTeamModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADD COMMITTEE MODAL ══════════════ -->
+<div class="modal-overlay" id="addCommitteeModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addCommitteeModal')">✕</button>
+    <h3 id="addCommitteeTitle">Tambah Insentif Panitia</h3>
+    <p class="modal-sub">Catat data insentif anggota panitia.</p>
+    <input type="hidden" id="editCommitteeId">
+    <div class="form-grid" style="margin-bottom:14px;">
+      <div class="form-group">
+        <label>Nama Panitia</label>
+        <input type="text" class="form-control" id="committeeName" placeholder="Nama lengkap">
+      </div>
+      <div class="form-group">
+        <label>Jabatan</label>
+        <input type="text" class="form-control" id="committeeRole" placeholder="cth: Ketua, Sekretaris">
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Nominal Insentif (Rp)</label>
+      <input type="number" class="form-control" id="committeeAmount" placeholder="0" min="0">
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveCommittee()">Simpan</button>
+      <button class="btn btn-secondary" onclick="closeModal('addCommitteeModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADD TOURNAMENT MODAL ══════════════ -->
+<div class="modal-overlay" id="addTournamentModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addTournamentModal')">✕</button>
+    <h3>Buat Turnamen Baru</h3>
+    <p class="modal-sub">Data turnamen akan disimpan di cloud Supabase.</p>
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Nama Turnamen</label>
+      <input type="text" class="form-control" id="tournamentName" placeholder="cth: Turnamen Voli HUT RI 2025">
+    </div>
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label>Tanggal Mulai</label>
+        <input type="date" class="form-control" id="tournamentStart">
+      </div>
+      <div class="form-group">
+        <label>Tanggal Selesai</label>
+        <input type="date" class="form-control" id="tournamentEnd">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="saveTournament()">Buat Turnamen</button>
+      <button class="btn btn-secondary" onclick="closeModal('addTournamentModal')">Batal</button>
+    </div>
+    <div id="addTournamentStatus" class="status-msg" style="display:none;"></div>
+  </div>
+</div>
+
+<!-- ══════════════ ADD PRICE MODAL ══════════════ -->
+<div class="modal-overlay" id="addPriceModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addPriceModal')">✕</button>
+    <h3 id="addPriceTitle">Set Harga Tiket</h3>
+    <p class="modal-sub">Atur harga tiket untuk tanggal tertentu. Harga berlaku untuk hari tersebut saja.</p>
+    <input type="hidden" id="editPriceId">
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Tanggal Berlaku</label>
+      <input type="date" class="form-control" id="priceDate">
+    </div>
+    <div class="form-grid" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label>🏍️ Parkir Motor (Rp)</label>
+        <input type="number" class="form-control" id="priceMotor" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>🚗 Parkir Mobil (Rp)</label>
+        <input type="number" class="form-control" id="priceMobil" placeholder="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>🎟️ Tiket Penonton (Rp)</label>
+        <input type="number" class="form-control" id="pricePenonton" placeholder="0" min="0">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="savePrice()">Simpan</button>
+      <button class="btn btn-secondary" onclick="closeModal('addPriceModal')">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ HAMBURGER ══════════════ -->
+<button class="hamburger" onclick="toggleSidebar()">☰</button>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Voley<span>Kas</span></div>
+    <div class="sidebar-tournament">
+      <label>Turnamen Aktif</label>
+      <select class="tournament-select" id="tournamentSelect" onchange="switchTournament(this.value)">
+        <option value="">— Pilih Turnamen —</option>
+      </select>
+      <button class="btn-new-tournament" onclick="openModal('addTournamentModal')">+ Turnamen Baru</button>
+    </div>
+    <nav class="nav-list">
+      <div class="nav-item active" data-page="dashboard" onclick="navTo('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" data-page="neraca" onclick="navTo('neraca')">
+        <span class="nav-icon">💰</span> Neraca Utama
+      </div>
+      <div class="nav-item" data-page="tiket" onclick="navTo('tiket')">
+        <span class="nav-icon">🎟️</span> Tiket Harian
+      </div>
+      <div class="nav-item" data-page="sponsor" onclick="navTo('sponsor')">
+        <span class="nav-icon">🤝</span> Sponsorship
+      </div>
+      <div class="nav-item" data-page="pendaftaran" onclick="navTo('pendaftaran')">
+        <span class="nav-icon">📋</span> Pendaftaran Tim
+      </div>
+      <div class="nav-item" data-page="insentif" onclick="navTo('insentif')">
+        <span class="nav-icon">👥</span> Insentif Panitia
+      </div>
+      <div class="nav-item" data-page="pengaturan" onclick="navTo('pengaturan')">
+        <span class="nav-icon">⚙️</span> Pengaturan
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sync-badge">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncText">Mengecek koneksi...</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="topbar">
+        <div class="topbar-title">
+          Dashboard
+          <small id="dashTournamentName">Pilih turnamen untuk mulai</small>
+        </div>
+      </div>
+      <div class="grand-total-card">
+        <div>
+          <div class="grand-total-label">Grand Total Saldo</div>
+          <div class="grand-total-value" id="grandTotal">Rp 0</div>
+          <div class="grand-total-meta" id="grandTotalMeta">Pilih turnamen untuk melihat data</div>
+        </div>
+      </div>
+      <div class="stat-grid" id="dashStatGrid">
+        <div class="stat-card green">
+          <div class="stat-label">Neraca — Pemasukan</div>
+          <div class="stat-value" id="dashIncome">Rp 0</div>
+          <div class="stat-sub" id="dashIncomeSub">0 transaksi</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Neraca — Pengeluaran</div>
+          <div class="stat-value" id="dashExpense">Rp 0</div>
+          <div class="stat-sub" id="dashExpenseSub">0 transaksi</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Total Tiket & Parkir</div>
+          <div class="stat-value" id="dashTicket">Rp 0</div>
+          <div class="stat-sub" id="dashTicketSub">0 hari input</div>
+        </div>
+        <div class="stat-card" style="--accent:var(--purple);">
+          <div class="stat-label">Sponsorship (Lunas)</div>
+          <div class="stat-value" style="color:var(--purple)" id="dashSponsor">Rp 0</div>
+          <div class="stat-sub" id="dashSponsorSub">0 sponsor</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-label">Pendaftaran Tim (Lunas)</div>
+          <div class="stat-value" id="dashTeam">Rp 0</div>
+          <div class="stat-sub" id="dashTeamSub">0 tim</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Insentif Panitia</div>
+          <div class="stat-value" id="dashCommittee">Rp 0</div>
+          <div class="stat-sub" id="dashCommitteeSub">0 panitia</div>
+        </div>
+      </div>
+      <!-- Quick recent tickets -->
+      <div class="card">
+        <div class="card-title">Tiket Harian — 5 Hari Terakhir</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Motor</th>
+                <th>Mobil</th>
+                <th>Penonton</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="dashTicketTable">
+              <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🎟️</div><p>Belum ada data tiket</p></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── NERACA UTAMA ── -->
+    <div class="page" id="page-neraca">
+      <div class="topbar">
+        <div class="topbar-title">
+          Neraca Utama
+          <small>Pemasukan &amp; pengeluaran umum turnamen</small>
+        </div>
+        <button class="btn btn-primary" onclick="openAddTx()">+ Tambah Transaksi</button>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+        <div class="stat-card green">
+          <div class="stat-label">Total Pemasukan</div>
+          <div class="stat-value" id="neracaIncome">Rp 0</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Total Pengeluaran</div>
+          <div class="stat-value" id="neracaExpense">Rp 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Saldo Neraca</div>
+          <div class="stat-value" id="neracaBalance">Rp 0</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="section-header">
+          <h3>Daftar Transaksi</h3>
+          <div style="display:flex;gap:8px;">
+            <select class="form-control" style="padding:6px 10px;font-size:.78rem;" id="neracaFilter" onchange="renderNeraca()">
+              <option value="all">Semua</option>
+              <option value="income">Pemasukan</option>
+              <option value="expense">Pengeluaran</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Jenis</th>
+                <th>Kategori</th>
+                <th>Keterangan</th>
+                <th>Nominal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="neracaTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TIKET HARIAN ── -->
+    <div class="page" id="page-tiket">
+      <div class="topbar">
+        <div class="topbar-title">
+          Tiket Harian
+          <small>Input tiket &amp; parkir per hari pertandingan</small>
+        </div>
+      </div>
+      <!-- Input Form -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="card-title">Input Hari Ini</div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <div class="form-group" style="flex:0 0 180px;">
+            <label>Tanggal</label>
+            <input type="date" class="form-control" id="ticketDate">
+          </div>
+          <div id="ticketPriceInfo" style="font-size:.78rem;color:var(--text3);padding-top:18px;"></div>
+        </div>
+        <div class="ticket-day-grid">
+          <div class="ticket-input-card">
+            <label>🏍️ Parkir Motor</label>
+            <div class="ticket-qty-row">
+              <button class="btn btn-secondary btn-sm" onclick="adjustQty('motor',-1)">−</button>
+              <input type="number" id="qtyMotor" value="0" min="0" oninput="calcTicketTotal()">
+              <button class="btn btn-secondary btn-sm" onclick="adjustQty('motor',1)">+</button>
+            </div>
+            <div class="ticket-price-note" id="priceMotorNote">Harga: —</div>
+          </div>
+          <div class="ticket-input-card">
+            <label>🚗 Parkir Mobil</label>
+            <div class="ticket-qty-row">
+              <button class="btn btn-secondary btn-sm" onclick="adjustQty('mobil',-1)">−</button>
+              <input type="number" id="qtyMobil" value="0" min="0" oninput="calcTicketTotal()">
+              <button class="btn btn-secondary btn-sm" onclick="adjustQty('mobil',1)">+</button>
+            </div>
+            <div class="ticket-price-note" id="priceMobilNote">Harga: —</div>
+          </div>
+          <div class="ticket-input-card">
+            <label>🎟️ Tiket Penonton</label>
+            <div class="ticket-qty-row">
+              <button class="btn btn-secondary btn-sm" onclick="adjustQty('penonton',-1)">−</button>
+              <input type="number" id="qtyPenonton" value="0" min="0" oninput="calcTicketTotal()">
+              <button class="btn btn-secondary btn-sm" onclick="adjustQty('penonton',1)">+</button>
+            </div>
+            <div class="ticket-price-note" id="pricePenontonNote">Harga: —</div>
+          </div>
+          <div class="ticket-input-card" style="background:rgba(245,166,35,.07);border-color:rgba(245,166,35,.3);">
+            <label>💰 Total Hari Ini</label>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--accent);font-family:var(--mono);margin-top:8px;" id="ticketDayTotal">Rp 0</div>
+            <div style="font-size:.75rem;color:var(--text3);margin-top:6px;" id="ticketDayBreakdown">—</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="saveTicketDay()" id="saveTicketBtn">Simpan Data Hari Ini</button>
+      </div>
+      <!-- Price Schedule -->
+      <div class="card" style="margin-bottom:20px;">
+        <div class="section-header">
+          <h3>Jadwal Harga Tiket</h3>
+          <button class="btn btn-secondary btn-sm" onclick="openAddPrice()">+ Set Harga</button>
+        </div>
+        <div id="priceScheduleList">
+          <div class="empty-state"><div class="empty-icon">💲</div><p>Belum ada harga yang diset</p></div>
+        </div>
+      </div>
+      <!-- History -->
+      <div class="card">
+        <div class="card-title">Rekap Tiket Per Hari</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Motor (qty×harga)</th>
+                <th>Mobil (qty×harga)</th>
+                <th>Penonton (qty×harga)</th>
+                <th>Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ticketHistoryTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SPONSORSHIP ── -->
+    <div class="page" id="page-sponsor">
+      <div class="topbar">
+        <div class="topbar-title">
+          Sponsorship
+          <small>Daftar sponsor &amp; status pembayaran</small>
+        </div>
+        <button class="btn btn-primary" onclick="openAddSponsor()">+ Tambah Sponsor</button>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+        <div class="stat-card green">
+          <div class="stat-label">Lunas</div>
+          <div class="stat-value" id="sponsorLunas">Rp 0</div>
+          <div class="stat-sub" id="sponsorLunasSub">0 sponsor</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Belum Lunas</div>
+          <div class="stat-value" id="sponsorBelum">Rp 0</div>
+          <div class="stat-sub" id="sponsorBelumSub">0 sponsor</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Komitmen</div>
+          <div class="stat-value" id="sponsorTotal">Rp 0</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Sponsor</th>
+                <th>Nominal</th>
+                <th>Tanggal</th>
+                <th>Status</th>
+                <th>Catatan</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="sponsorTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PENDAFTARAN TIM ── -->
+    <div class="page" id="page-pendaftaran">
+      <div class="topbar">
+        <div class="topbar-title">
+          Pendaftaran Tim
+          <small>Daftar tim peserta &amp; status pembayaran</small>
+        </div>
+        <button class="btn btn-primary" onclick="openAddTeam()">+ Tambah Tim</button>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+        <div class="stat-card green">
+          <div class="stat-label">Lunas</div>
+          <div class="stat-value" id="teamLunas">Rp 0</div>
+          <div class="stat-sub" id="teamLunasSub">0 tim</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Belum Lunas</div>
+          <div class="stat-value" id="teamBelum">Rp 0</div>
+          <div class="stat-sub" id="teamBelumSub">0 tim</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Tim Daftar</div>
+          <div class="stat-value" id="teamTotal">0 Tim</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Tim</th>
+                <th>Nominal</th>
+                <th>Tanggal Daftar</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="teamTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INSENTIF PANITIA ── -->
+    <div class="page" id="page-insentif">
+      <div class="topbar">
+        <div class="topbar-title">
+          Insentif Panitia
+          <small>Daftar insentif anggota panitia turnamen</small>
+        </div>
+        <button class="btn btn-primary" onclick="openAddCommittee()">+ Tambah Insentif</button>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+        <div class="stat-card red">
+          <div class="stat-label">Total Insentif</div>
+          <div class="stat-value" id="committeeTotal">Rp 0</div>
+          <div class="stat-sub" id="committeeSub">0 panitia</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Panitia</th>
+                <th>Jabatan</th>
+                <th>Insentif</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="committeeTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PENGATURAN ── -->
+    <div class="page" id="page-pengaturan">
+      <div class="topbar">
+        <div class="topbar-title">
+          Pengaturan
+          <small>Konfigurasi aplikasi &amp; notifikasi</small>
+        </div>
+      </div>
+      <div class="card" style="max-width:600px;">
+        <div class="settings-section">
+          <h4>🔌 Koneksi Supabase</h4>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Supabase URL</label>
+            <input type="text" class="form-control" id="settingUrl" placeholder="https://xxxx.supabase.co">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>Supabase Anon Key</label>
+            <input type="password" class="form-control" id="settingKey" placeholder="eyJhbGci...">
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="testConnection()">🧪 Test Koneksi</button>
+          <div id="connStatus" class="status-msg" style="display:none;"></div>
+        </div>
+        <hr class="divider">
+        <div class="settings-section">
+          <h4>🔐 Ganti Password</h4>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Password Lama</label>
+            <input type="password" class="form-control" id="oldPwd" placeholder="Password saat ini">
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Password Baru</label>
+            <input type="password" class="form-control" id="newPwd" placeholder="Min. 6 karakter">
+          </div>
+          <div class="form-group" style="margin-bottom:14px;">
+            <label>Konfirmasi Password Baru</label>
+            <input type="password" class="form-control" id="newPwd2" placeholder="Ulangi password baru">
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="changePassword()">Ganti Password</button>
+          <div id="pwdStatus" class="status-msg" style="display:none;"></div>
+        </div>
+        <hr class="divider">
+        <div class="settings-section">
+          <h4>📱 Notifikasi Telegram</h4>
+          <p style="font-size:.8rem;color:var(--text2);margin-bottom:14px;">
+            Kirim rekap tiket harian jam 04.00 pagi ke chat Telegram Anda melalui Supabase Edge Function.
+          </p>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Bot Token</label>
+            <input type="text" class="form-control" id="tgBotToken" placeholder="1234567890:ABCdef...">
+          </div>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Chat ID (admin)</label>
+            <input type="text" class="form-control" id="tgChatId" placeholder="cth: 123456789">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="saveTelegramConfig()">💾 Simpan</button>
+            <button class="btn btn-secondary btn-sm" onclick="testTelegram()">📤 Kirim Test</button>
+          </div>
+          <div id="tgStatus" class="status-msg" style="display:none;"></div>
+          <div style="margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
+            <div style="font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">SQL untuk Supabase (pg_cron + Edge Function)</div>
+            <pre id="sqlCronCode" style="font-family:var(--mono);font-size:.72rem;color:var(--accent2);white-space:pre-wrap;line-height:1.6;"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════ TOAST ══════════════ -->
+<div id="toastContainer"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  CRYPTO UTILS
+// ═══════════════════════════════════════════════
+const SALT_KEY   = 'vk_salt';
+const CHECK_KEY  = 'vk_check';
+const URL_KEY    = 'vk_url';
+const AKEY_KEY   = 'vk_akey';
+const TG_KEY     = 'vk_tg';
+const SENTINEL   = 'vk_ok_2025';
+
+let _cryptoKey = null;
+let _sbUrl = '';
+let _sbKey = '';
+let sbClient = null;
+
+async function deriveKey(pwd, salt) {
+  const enc = new TextEncoder();
+  const raw = await crypto.subtle.importKey('raw', enc.encode(pwd), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    raw, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+  );
+}
+async function encryptStr(key, str) {
+  const iv  = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const ct  = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, enc.encode(str));
+  const buf = new Uint8Array(iv.byteLength + ct.byteLength);
+  buf.set(iv); buf.set(new Uint8Array(ct), iv.byteLength);
+  return btoa(String.fromCharCode(...buf));
+}
+async function decryptStr(key, b64) {
+  const buf = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+  const iv  = buf.slice(0, 12);
+  const ct  = buf.slice(12);
+  const pt  = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return new TextDecoder().decode(pt);
+}
+async function setupNewPassword(pwd, url, akey) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key  = await deriveKey(pwd, salt);
+  localStorage.setItem(SALT_KEY,  btoa(String.fromCharCode(...salt)));
+  localStorage.setItem(CHECK_KEY, await encryptStr(key, SENTINEL));
+  localStorage.setItem(URL_KEY,   await encryptStr(key, url));
+  localStorage.setItem(AKEY_KEY,  await encryptStr(key, akey));
+  _cryptoKey = key;
+}
+function isPwdConfigured() {
+  return !!(localStorage.getItem(SALT_KEY) && localStorage.getItem(CHECK_KEY));
+}
+
+// ═══════════════════════════════════════════════
+//  SUPABASE API
+// ═══════════════════════════════════════════════
+async function sbFetch(table, method='GET', body=null, query='') {
+  if (!_sbUrl || !_sbKey) return null;
+  try {
+    const res = await fetch(`${_sbUrl}/rest/v1/${table}${query}`, {
+      method,
+      headers: {
+        'apikey': _sbKey,
+        'Authorization': `Bearer ${_sbKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'return=representation' : (method === 'PATCH' ? 'return=representation' : ''),
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!res.ok) return null;
+    const txt = await res.text();
+    return txt ? JSON.parse(txt) : [];
+  } catch { return null; }
+}
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let currentTournamentId = localStorage.getItem('vk_current_tournament') || null;
+let tournaments = [];
+let transactions = [];
+let ticketPrices = [];
+let ticketDaily  = [];
+let sponsorships = [];
+let teamRegs     = [];
+let committee    = [];
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', initApp);
+
+async function initApp() {
+  updateSyncBadge();
+  window.addEventListener('online',  updateSyncBadge);
+  window.addEventListener('offline', updateSyncBadge);
+
+  if (!isPwdConfigured()) {
+    document.getElementById('lockScreen').style.display = 'none';
+    openModal('setupModal');
+    return;
+  }
+  document.getElementById('lockScreen').style.display = 'flex';
+  document.getElementById('lockPwdInput').focus();
+}
+
+async function doUnlock() {
+  const pwd = document.getElementById('lockPwdInput').value;
+  const st  = document.getElementById('lockStatus');
+  if (!pwd) { showStatus(st, 'Masukkan password terlebih dahulu.', 'error'); return; }
+  try {
+    const saltB64 = localStorage.getItem(SALT_KEY);
+    const salt    = Uint8Array.from(atob(saltB64), c => c.charCodeAt(0));
+    const key     = await deriveKey(pwd, salt);
+    const plain   = await decryptStr(key, localStorage.getItem(CHECK_KEY));
+    if (plain !== SENTINEL) throw new Error('wrong');
+    _cryptoKey = key;
+    _sbUrl = await decryptStr(key, localStorage.getItem(URL_KEY));
+    _sbKey = await decryptStr(key, localStorage.getItem(AKEY_KEY));
+    sessionStorage.setItem('vk_unlocked', '1');
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    afterUnlock();
+  } catch {
+    showStatus(st, '❌ Password salah.', 'error');
+  }
+}
+
+async function doSetup() {
+  const url  = document.getElementById('setupUrl').value.trim();
+  const key  = document.getElementById('setupKey').value.trim();
+  const pwd  = document.getElementById('setupPwd').value;
+  const pwd2 = document.getElementById('setupPwd2').value;
+  const st   = document.getElementById('setupStatus');
+  const btn  = document.getElementById('setupBtn');
+  if (!url || !key) { showStatus(st, '❌ URL dan Anon Key wajib diisi.', 'error'); return; }
+  if (pwd.length < 6) { showStatus(st, '❌ Password minimal 6 karakter.', 'error'); return; }
+  if (pwd !== pwd2)   { showStatus(st, '❌ Password tidak cocok.', 'error'); return; }
+  btn.disabled = true; btn.textContent = '⏳ Menghubungkan...';
+  showStatus(st, '⏳ Mengetes koneksi...', 'warning');
+  _sbUrl = url; _sbKey = key;
+  const test = await sbFetch('tournaments', 'GET', null, '?limit=1');
+  if (test === null) {
+    _sbUrl=''; _sbKey='';
+    btn.disabled=false; btn.textContent='🔌 Hubungkan & Mulai';
+    showStatus(st,'❌ Koneksi gagal. Periksa URL dan Key Anda.','error'); return;
+  }
+  showStatus(st,'⏳ Mengenkripsi kredensial...','warning');
+  await setupNewPassword(pwd, url, key);
+  showStatus(st,'✅ Berhasil! Memuat aplikasi...','success');
+  setTimeout(() => {
+    closeModal('setupModal');
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('app').style.display='block';
+    afterUnlock();
+  }, 900);
+}
+
+async function afterUnlock() {
+  updateSyncBadge();
+  renderSqlCron();
+  await loadTournaments();
+  if (currentTournamentId) {
+    document.getElementById('tournamentSelect').value = currentTournamentId;
+    await loadAllData();
+  }
+  navTo('dashboard');
+}
+
+// ═══════════════════════════════════════════════
+//  TOURNAMENTS
+// ═══════════════════════════════════════════════
+async function loadTournaments() {
+  const data = await sbFetch('tournaments','GET',null,'?order=created_at.desc');
+  if (data) tournaments = data;
+  renderTournamentSelect();
+}
+
+function renderTournamentSelect() {
+  const sel = document.getElementById('tournamentSelect');
+  sel.innerHTML = '<option value="">— Pilih Turnamen —</option>';
+  tournaments.forEach(t => {
+    const o = document.createElement('option');
+    o.value = t.id; o.textContent = t.name;
+    sel.appendChild(o);
+  });
+  if (currentTournamentId) sel.value = currentTournamentId;
+}
+
+async function saveTournament() {
+  const name  = document.getElementById('tournamentName').value.trim();
+  const start = document.getElementById('tournamentStart').value;
+  const end   = document.getElementById('tournamentEnd').value;
+  const st    = document.getElementById('addTournamentStatus');
+  if (!name) { showStatus(st,'❌ Nama turnamen wajib diisi.','error'); return; }
+  const res = await sbFetch('tournaments','POST',{ name, date_start: start||null, date_end: end||null, created_at: new Date().toISOString() });
+  if (!res) { showStatus(st,'❌ Gagal menyimpan.','error'); return; }
+  closeModal('addTournamentModal');
+  showToast('Turnamen berhasil dibuat! 🏆','success');
+  document.getElementById('tournamentName').value='';
+  document.getElementById('tournamentStart').value='';
+  document.getElementById('tournamentEnd').value='';
+  await loadTournaments();
+  if (res[0]) { switchTournament(res[0].id); }
+}
+
+async function switchTournament(id) {
+  currentTournamentId = id;
+  localStorage.setItem('vk_current_tournament', id);
+  document.getElementById('tournamentSelect').value = id;
+  if (id) await loadAllData();
+  else clearAllData();
+  renderDashboard();
+}
+
+// ═══════════════════════════════════════════════
+//  LOAD ALL DATA
+// ═══════════════════════════════════════════════
+async function loadAllData() {
+  if (!currentTournamentId) return;
+  const q = `?tournament_id=eq.${currentTournamentId}`;
+  const qDate = q + '&order=date.asc';
+  const [tx, tp, td, sp, tr, cm] = await Promise.all([
+    sbFetch('transactions','GET',null, q+'&order=date.desc'),
+    sbFetch('ticket_prices','GET',null, qDate),
+    sbFetch('ticket_daily','GET',null, qDate),
+    sbFetch('sponsorships','GET',null, q+'&order=date_in.desc'),
+    sbFetch('team_registrations','GET',null, q+'&order=date_registered.desc'),
+    sbFetch('committee_incentives','GET',null, q),
+  ]);
+  transactions = tx || [];
+  ticketPrices = tp || [];
+  ticketDaily  = td || [];
+  sponsorships = sp || [];
+  teamRegs     = tr || [];
+  committee    = cm || [];
+  renderAll();
+}
+
+function clearAllData() {
+  transactions=[]; ticketPrices=[]; ticketDaily=[];
+  sponsorships=[]; teamRegs=[]; committee=[];
+}
+
+function renderAll() {
+  renderDashboard();
+  renderNeraca();
+  renderTicket();
+  renderSponsor();
+  renderTeam();
+  renderCommittee();
+}
+
+// ═══════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════
+function renderDashboard() {
+  const t = tournaments.find(t=>t.id===currentTournamentId);
+  document.getElementById('dashTournamentName').textContent = t ? t.name : 'Pilih turnamen untuk mulai';
+
+  const income   = transactions.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount),0);
+  const expense  = transactions.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount),0);
+  const tickets  = ticketDaily.reduce((s,x)=>s+Number(x.total),0);
+  const sponLun  = sponsorships.filter(x=>x.status==='lunas').reduce((s,x)=>s+Number(x.amount),0);
+  const teamLun  = teamRegs.filter(x=>x.status==='lunas').reduce((s,x)=>s+Number(x.amount),0);
+  const cmTotal  = committee.reduce((s,x)=>s+Number(x.amount),0);
+  const grand    = income - expense + tickets + sponLun + teamLun - cmTotal;
+
+  document.getElementById('grandTotal').textContent = rp(grand);
+  document.getElementById('grandTotalMeta').textContent =
+    `Neraca + Tiket + Sponsorship + Pendaftaran − Insentif`;
+
+  document.getElementById('dashIncome').textContent    = rp(income);
+  document.getElementById('dashIncomeSub').textContent = `${transactions.filter(x=>x.type==='income').length} transaksi`;
+  document.getElementById('dashExpense').textContent   = rp(expense);
+  document.getElementById('dashExpenseSub').textContent= `${transactions.filter(x=>x.type==='expense').length} transaksi`;
+  document.getElementById('dashTicket').textContent    = rp(tickets);
+  document.getElementById('dashTicketSub').textContent = `${ticketDaily.length} hari input`;
+  document.getElementById('dashSponsor').textContent   = rp(sponLun);
+  document.getElementById('dashSponsorSub').textContent= `${sponsorships.filter(x=>x.status==='lunas').length} sponsor lunas`;
+  document.getElementById('dashTeam').textContent      = rp(teamLun);
+  document.getElementById('dashTeamSub').textContent   = `${teamRegs.filter(x=>x.status==='lunas').length} tim lunas`;
+  document.getElementById('dashCommittee').textContent = rp(cmTotal);
+  document.getElementById('dashCommitteeSub').textContent=`${committee.length} panitia`;
+
+  // Recent tickets table
+  const recent = [...ticketDaily].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  const tb = document.getElementById('dashTicketTable');
+  if (!recent.length) {
+    tb.innerHTML='<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🎟️</div><p>Belum ada data tiket</p></div></td></tr>';
+  } else {
+    tb.innerHTML = recent.map(d => {
+      const pr = getPriceForDate(d.date);
+      return `<tr>
+        <td><strong>${fmtDate(d.date)}</strong></td>
+        <td class="mono">${d.qty_motor} × ${rp(pr.motor)} = ${rp(d.qty_motor*pr.motor)}</td>
+        <td class="mono">${d.qty_mobil} × ${rp(pr.mobil)} = ${rp(d.qty_mobil*pr.mobil)}</td>
+        <td class="mono">${d.qty_penonton} × ${rp(pr.penonton)} = ${rp(d.qty_penonton*pr.penonton)}</td>
+        <td class="mono" style="color:var(--accent);font-weight:700;">${rp(d.total)}</td>
+      </tr>`;
+    }).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  NERACA
+// ═══════════════════════════════════════════════
+function renderNeraca() {
+  const filter = document.getElementById('neracaFilter')?.value || 'all';
+  const filtered = filter==='all' ? transactions : transactions.filter(x=>x.type===filter);
+  const income  = transactions.filter(x=>x.type==='income').reduce((s,x)=>s+Number(x.amount),0);
+  const expense = transactions.filter(x=>x.type==='expense').reduce((s,x)=>s+Number(x.amount),0);
+  document.getElementById('neracaIncome').textContent  = rp(income);
+  document.getElementById('neracaExpense').textContent = rp(expense);
+  const bal = document.getElementById('neracaBalance');
+  const b = income-expense;
+  bal.textContent = rp(b);
+  bal.style.color = b>=0 ? 'var(--green)' : 'var(--red)';
+
+  const tb = document.getElementById('neracaTable');
+  if (!filtered.length) {
+    tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">💰</div><p>Belum ada transaksi</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = filtered.map(x=>`<tr>
+    <td>${fmtDate(x.date)}</td>
+    <td><span class="badge ${x.type}">${x.type==='income'?'Pemasukan':'Pengeluaran'}</span></td>
+    <td><strong>${x.category||'—'}</strong></td>
+    <td style="color:var(--text2)">${x.description||'—'}</td>
+    <td class="mono" style="color:${x.type==='income'?'var(--green)':'var(--red)'}">${rp(x.amount)}</td>
+    <td>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="editTx('${x.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTx('${x.id}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function openAddTx() {
+  document.getElementById('editTxId').value='';
+  document.getElementById('addTxTitle').textContent='Tambah Transaksi';
+  document.getElementById('txDate').value=today();
+  document.getElementById('txType').value='income';
+  document.getElementById('txCategory').value='';
+  document.getElementById('txAmount').value='';
+  document.getElementById('txDesc').value='';
+  openModal('addTxModal');
+}
+
+function editTx(id) {
+  const x = transactions.find(t=>t.id===id); if(!x) return;
+  document.getElementById('editTxId').value=id;
+  document.getElementById('addTxTitle').textContent='Edit Transaksi';
+  document.getElementById('txDate').value=x.date||'';
+  document.getElementById('txType').value=x.type;
+  document.getElementById('txCategory').value=x.category||'';
+  document.getElementById('txAmount').value=x.amount;
+  document.getElementById('txDesc').value=x.description||'';
+  openModal('addTxModal');
+}
+
+async function saveTx() {
+  if (!currentTournamentId) { showToast('Pilih turnamen dulu!','error'); return; }
+  const id     = document.getElementById('editTxId').value;
+  const date   = document.getElementById('txDate').value;
+  const type   = document.getElementById('txType').value;
+  const cat    = document.getElementById('txCategory').value.trim();
+  const amount = Number(document.getElementById('txAmount').value);
+  const desc   = document.getElementById('txDesc').value.trim();
+  if (!date||!amount) { showToast('Tanggal dan nominal wajib diisi.','error'); return; }
+  const payload = { tournament_id:currentTournamentId, date, type, category:cat, amount, description:desc };
+  let res;
+  if (id) res = await sbFetch(`transactions?id=eq.${id}`, 'PATCH', payload);
+  else    res = await sbFetch('transactions', 'POST', {...payload, created_at:new Date().toISOString()});
+  if (res===null) { showToast('Gagal menyimpan.','error'); return; }
+  closeModal('addTxModal');
+  showToast(id?'Transaksi diperbarui ✅':'Transaksi ditambahkan ✅','success');
+  await loadAllData();
+}
+
+async function deleteTx(id) {
+  if (!confirm('Hapus transaksi ini?')) return;
+  await sbFetch(`transactions?id=eq.${id}`,'DELETE');
+  showToast('Transaksi dihapus.','info');
+  await loadAllData();
+}
+
+// ═══════════════════════════════════════════════
+//  TIKET HARIAN
+// ═══════════════════════════════════════════════
+function renderTicket() {
+  renderPriceSchedule();
+  renderTicketHistory();
+  document.getElementById('ticketDate').value = today();
+  loadTicketForDate();
+}
+
+function getPriceForDate(dateStr) {
+  // Find exact match or nearest previous date
+  const sorted = [...ticketPrices].sort((a,b)=>a.date.localeCompare(b.date));
+  let pr = { motor:0, mobil:0, penonton:0 };
+  for (const p of sorted) {
+    if (p.date <= dateStr) { pr = { motor:p.price_motor, mobil:p.price_mobil, penonton:p.price_penonton }; }
+  }
+  return pr;
+}
+
+function loadTicketForDate() {
+  const date = document.getElementById('ticketDate').value;
+  if (!date) return;
+  const pr = getPriceForDate(date);
+  document.getElementById('priceMotorNote').textContent   = `Harga: ${rp(pr.motor)}`;
+  document.getElementById('priceMobilNote').textContent   = `Harga: ${rp(pr.mobil)}`;
+  document.getElementById('pricePenontonNote').textContent= `Harga: ${rp(pr.penonton)}`;
+  document.getElementById('ticketPriceInfo').textContent  =
+    pr.motor||pr.mobil||pr.penonton ? `Harga berlaku untuk ${fmtDate(date)}` : '⚠️ Belum ada harga diset untuk tanggal ini';
+
+  const existing = ticketDaily.find(d=>d.date===date);
+  document.getElementById('qtyMotor').value    = existing ? existing.qty_motor    : 0;
+  document.getElementById('qtyMobil').value    = existing ? existing.qty_mobil    : 0;
+  document.getElementById('qtyPenonton').value = existing ? existing.qty_penonton : 0;
+  calcTicketTotal();
+}
+
+function calcTicketTotal() {
+  const date = document.getElementById('ticketDate').value;
+  const pr   = getPriceForDate(date);
+  const qm   = Number(document.getElementById('qtyMotor').value)||0;
+  const qc   = Number(document.getElementById('qtyMobil').value)||0;
+  const qp   = Number(document.getElementById('qtyPenonton').value)||0;
+  const totalM = qm*pr.motor, totalC = qc*pr.mobil, totalP = qp*pr.penonton;
+  const grand  = totalM+totalC+totalP;
+  document.getElementById('ticketDayTotal').textContent = rp(grand);
+  document.getElementById('ticketDayBreakdown').textContent =
+    `Motor ${rp(totalM)} + Mobil ${rp(totalC)} + Penonton ${rp(totalP)}`;
+}
+
+function adjustQty(type, delta) {
+  const el = document.getElementById('qty'+type.charAt(0).toUpperCase()+type.slice(1));
+  el.value = Math.max(0, (Number(el.value)||0)+delta);
+  calcTicketTotal();
+}
+
+async function saveTicketDay() {
+  if (!currentTournamentId) { showToast('Pilih turnamen dulu!','error'); return; }
+  const date = document.getElementById('ticketDate').value;
+  if (!date) { showToast('Pilih tanggal dulu.','error'); return; }
+  const pr  = getPriceForDate(date);
+  const qm  = Number(document.getElementById('qtyMotor').value)||0;
+  const qc  = Number(document.getElementById('qtyMobil').value)||0;
+  const qp  = Number(document.getElementById('qtyPenonton').value)||0;
+  const total = qm*pr.motor + qc*pr.mobil + qp*pr.penonton;
+  const payload = { tournament_id:currentTournamentId, date, qty_motor:qm, qty_mobil:qc, qty_penonton:qp, total };
+  const existing = ticketDaily.find(d=>d.date===date);
+  let res;
+  if (existing) res = await sbFetch(`ticket_daily?id=eq.${existing.id}`,'PATCH',payload);
+  else          res = await sbFetch('ticket_daily','POST',{...payload, created_at:new Date().toISOString()});
+  if (res===null) { showToast('Gagal menyimpan.','error'); return; }
+  showToast(`Data tiket ${fmtDate(date)} disimpan ✅`,'success');
+  await loadAllData();
+}
+
+function renderPriceSchedule() {
+  const el = document.getElementById('priceScheduleList');
+  if (!ticketPrices.length) {
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">💲</div><p>Belum ada harga yang diset. Klik "+ Set Harga" untuk mulai.</p></div>';
+    return;
+  }
+  const sorted = [...ticketPrices].sort((a,b)=>a.date.localeCompare(b.date));
+  el.innerHTML = `
+    <div class="price-row header">
+      <span>Tanggal</span><span>🏍️ Motor</span><span>🚗 Mobil</span><span>🎟️ Penonton</span><span></span>
+    </div>
+    ${sorted.map(p=>`
+    <div class="price-row">
+      <span><strong>${fmtDate(p.date)}</strong></span>
+      <span class="mono">${rp(p.price_motor)}</span>
+      <span class="mono">${rp(p.price_mobil)}</span>
+      <span class="mono">${rp(p.price_penonton)}</span>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="editPrice('${p.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deletePrice('${p.id}')">🗑️</button>
+      </div>
+    </div>`).join('')}`;
+}
+
+function renderTicketHistory() {
+  const tb = document.getElementById('ticketHistoryTable');
+  const sorted = [...ticketDaily].sort((a,b)=>b.date.localeCompare(a.date));
+  if (!sorted.length) {
+    tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📅</div><p>Belum ada data</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = sorted.map(d=>{
+    const pr = getPriceForDate(d.date);
+    return `<tr>
+      <td><strong>${fmtDate(d.date)}</strong></td>
+      <td class="mono">${d.qty_motor} × ${rp(pr.motor)}</td>
+      <td class="mono">${d.qty_mobil} × ${rp(pr.mobil)}</td>
+      <td class="mono">${d.qty_penonton} × ${rp(pr.penonton)}</td>
+      <td class="mono" style="color:var(--accent);font-weight:700;">${rp(d.total)}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteTicketDay('${d.id}')">🗑️</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function openAddPrice(id) {
+  document.getElementById('editPriceId').value='';
+  document.getElementById('addPriceTitle').textContent='Set Harga Tiket';
+  document.getElementById('priceDate').value=today();
+  document.getElementById('priceMotor').value='';
+  document.getElementById('priceMobil').value='';
+  document.getElementById('pricePenonton').value='';
+  openModal('addPriceModal');
+}
+
+function editPrice(id) {
+  const p = ticketPrices.find(x=>x.id===id); if(!p) return;
+  document.getElementById('editPriceId').value=id;
+  document.getElementById('addPriceTitle').textContent='Edit Harga Tiket';
+  document.getElementById('priceDate').value=p.date;
+  document.getElementById('priceMotor').value=p.price_motor;
+  document.getElementById('priceMobil').value=p.price_mobil;
+  document.getElementById('pricePenonton').value=p.price_penonton;
+  openModal('addPriceModal');
+}
+
+async function savePrice() {
+  if (!currentTournamentId) return;
+  const id  = document.getElementById('editPriceId').value;
+  const date= document.getElementById('priceDate').value;
+  const pm  = Number(document.getElementById('priceMotor').value)||0;
+  const pc  = Number(document.getElementById('priceMobil').value)||0;
+  const pp  = Number(document.getElementById('pricePenonton').value)||0;
+  if (!date) { showToast('Tanggal wajib diisi.','error'); return; }
+  const payload = { tournament_id:currentTournamentId, date, price_motor:pm, price_mobil:pc, price_penonton:pp };
+  let res;
+  if (id) res = await sbFetch(`ticket_prices?id=eq.${id}`,'PATCH',payload);
+  else    res = await sbFetch('ticket_prices','POST',{...payload,created_at:new Date().toISOString()});
+  if (res===null) { showToast('Gagal menyimpan.','error'); return; }
+  closeModal('addPriceModal');
+  showToast('Harga tiket disimpan ✅','success');
+  await loadAllData();
+}
+
+async function deletePrice(id) {
+  if(!confirm('Hapus harga ini?')) return;
+  await sbFetch(`ticket_prices?id=eq.${id}`,'DELETE');
+  showToast('Harga dihapus.','info');
+  await loadAllData();
+}
+
+async function deleteTicketDay(id) {
+  if(!confirm('Hapus data tiket hari ini?')) return;
+  await sbFetch(`ticket_daily?id=eq.${id}`,'DELETE');
+  showToast('Data tiket dihapus.','info');
+  await loadAllData();
+}
+
+// ═══════════════════════════════════════════════
+//  SPONSORSHIP
+// ═══════════════════════════════════════════════
+function renderSponsor() {
+  const lunas = sponsorships.filter(x=>x.status==='lunas');
+  const belum = sponsorships.filter(x=>x.status==='belum');
+  const totLunas = lunas.reduce((s,x)=>s+Number(x.amount),0);
+  const totBelum = belum.reduce((s,x)=>s+Number(x.amount),0);
+  document.getElementById('sponsorLunas').textContent     = rp(totLunas);
+  document.getElementById('sponsorLunasSub').textContent  = `${lunas.length} sponsor`;
+  document.getElementById('sponsorBelum').textContent     = rp(totBelum);
+  document.getElementById('sponsorBelumSub').textContent  = `${belum.length} sponsor`;
+  document.getElementById('sponsorTotal').textContent     = rp(totLunas+totBelum);
+  const tb = document.getElementById('sponsorTable');
+  if (!sponsorships.length) {
+    tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🤝</div><p>Belum ada sponsor</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = sponsorships.map(s=>`<tr>
+    <td><strong>${s.sponsor_name}</strong></td>
+    <td class="mono" style="color:var(--green)">${rp(s.amount)}</td>
+    <td>${fmtDate(s.date_in)}</td>
+    <td><span class="badge ${s.status}">${s.status==='lunas'?'Lunas':'Belum Lunas'}</span></td>
+    <td style="color:var(--text2)">${s.note||'—'}</td>
+    <td>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="editSponsor('${s.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSponsor('${s.id}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function openAddSponsor() {
+  document.getElementById('editSponsorId').value='';
+  document.getElementById('addSponsorTitle').textContent='Tambah Sponsor';
+  document.getElementById('sponsorName').value='';
+  document.getElementById('sponsorAmount').value='';
+  document.getElementById('sponsorDate').value=today();
+  document.getElementById('sponsorStatus').value='lunas';
+  document.getElementById('sponsorNote').value='';
+  openModal('addSponsorModal');
+}
+
+function editSponsor(id) {
+  const s = sponsorships.find(x=>x.id===id); if(!s) return;
+  document.getElementById('editSponsorId').value=id;
+  document.getElementById('addSponsorTitle').textContent='Edit Sponsor';
+  document.getElementById('sponsorName').value=s.sponsor_name;
+  document.getElementById('sponsorAmount').value=s.amount;
+  document.getElementById('sponsorDate').value=s.date_in||'';
+  document.getElementById('sponsorStatus').value=s.status;
+  document.getElementById('sponsorNote').value=s.note||'';
+  openModal('addSponsorModal');
+}
+
+async function saveSponsor() {
+  if (!currentTournamentId) return;
+  const id     = document.getElementById('editSponsorId').value;
+  const name   = document.getElementById('sponsorName').value.trim();
+  const amount = Number(document.getElementById('sponsorAmount').value);
+  const date   = document.getElementById('sponsorDate').value;
+  const status = document.getElementById('sponsorStatus').value;
+  const note   = document.getElementById('sponsorNote').value.trim();
+  if (!name||!amount) { showToast('Nama dan nominal wajib diisi.','error'); return; }
+  const payload = { tournament_id:currentTournamentId, sponsor_name:name, amount, date_in:date||null, status, note };
+  let res;
+  if (id) res = await sbFetch(`sponsorships?id=eq.${id}`,'PATCH',payload);
+  else    res = await sbFetch('sponsorships','POST',{...payload,created_at:new Date().toISOString()});
+  if (res===null) { showToast('Gagal menyimpan.','error'); return; }
+  closeModal('addSponsorModal');
+  showToast(id?'Sponsor diperbarui ✅':'Sponsor ditambahkan ✅','success');
+  await loadAllData();
+}
+
+async function deleteSponsor(id) {
+  if(!confirm('Hapus data sponsor ini?')) return;
+  await sbFetch(`sponsorships?id=eq.${id}`,'DELETE');
+  showToast('Sponsor dihapus.','info');
+  await loadAllData();
+}
+
+// ═══════════════════════════════════════════════
+//  PENDAFTARAN TIM
+// ═══════════════════════════════════════════════
+function renderTeam() {
+  const lunas = teamRegs.filter(x=>x.status==='lunas');
+  const belum = teamRegs.filter(x=>x.status==='belum');
+  document.getElementById('teamLunas').textContent    = rp(lunas.reduce((s,x)=>s+Number(x.amount),0));
+  document.getElementById('teamLunasSub').textContent = `${lunas.length} tim`;
+  document.getElementById('teamBelum').textContent    = rp(belum.reduce((s,x)=>s+Number(x.amount),0));
+  document.getElementById('teamBelumSub').textContent = `${belum.length} tim`;
+  document.getElementById('teamTotal').textContent    = `${teamRegs.length} Tim`;
+  const tb = document.getElementById('teamTable');
+  if (!teamRegs.length) {
+    tb.innerHTML='<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><p>Belum ada tim terdaftar</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = teamRegs.map(t=>`<tr>
+    <td><strong>${t.team_name}</strong></td>
+    <td class="mono" style="color:var(--green)">${rp(t.amount)}</td>
+    <td>${fmtDate(t.date_registered)}</td>
+    <td><span class="badge ${t.status}">${t.status==='lunas'?'Lunas':'Belum Lunas'}</span></td>
+    <td>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="editTeam('${t.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTeam('${t.id}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function openAddTeam() {
+  document.getElementById('editTeamId').value='';
+  document.getElementById('addTeamTitle').textContent='Tambah Pendaftaran Tim';
+  document.getElementById('teamName').value='';
+  document.getElementById('teamAmount').value='';
+  document.getElementById('teamDate').value=today();
+  document.getElementById('teamStatus').value='lunas';
+  openModal('addTeamModal');
+}
+
+function editTeam(id) {
+  const t = teamRegs.find(x=>x.id===id); if(!t) return;
+  document.getElementById('editTeamId').value=id;
+  document.getElementById('addTeamTitle').textContent='Edit Tim';
+  document.getElementById('teamName').value=t.team_name;
+  document.getElementById('teamAmount').value=t.amount;
+  document.getElementById('teamDate').value=t.date_registered||'';
+  document.getElementById('teamStatus').value=t.status;
+  openModal('addTeamModal');
+}
+
+async function saveTeam() {
+  if (!currentTournamentId) return;
+  const id     = document.getElementById('editTeamId').value;
+  const name   = document.getElementById('teamName').value.trim();
+  const amount = Number(document.getElementById('teamAmount').value);
+  const date   = document.getElementById('teamDate').value;
+  const status = document.getElementById('teamStatus').value;
+  if (!name||!amount) { showToast('Nama tim dan nominal wajib diisi.','error'); return; }
+  const payload = { tournament_id:currentTournamentId, team_name:name, amount, date_registered:date||null, status };
+  let res;
+  if (id) res = await sbFetch(`team_registrations?id=eq.${id}`,'PATCH',payload);
+  else    res = await sbFetch('team_registrations','POST',{...payload,created_at:new Date().toISOString()});
+  if (res===null) { showToast('Gagal menyimpan.','error'); return; }
+  closeModal('addTeamModal');
+  showToast(id?'Tim diperbarui ✅':'Tim ditambahkan ✅','success');
+  await loadAllData();
+}
+
+async function deleteTeam(id) {
+  if(!confirm('Hapus data tim ini?')) return;
+  await sbFetch(`team_registrations?id=eq.${id}`,'DELETE');
+  showToast('Data tim dihapus.','info');
+  await loadAllData();
+}
+
+// ═══════════════════════════════════════════════
+//  INSENTIF PANITIA
+// ═══════════════════════════════════════════════
+function renderCommittee() {
+  const total = committee.reduce((s,x)=>s+Number(x.amount),0);
+  document.getElementById('committeeTotal').textContent = rp(total);
+  document.getElementById('committeeSub').textContent   = `${committee.length} panitia`;
+  const tb = document.getElementById('committeeTable');
+  if (!committee.length) {
+    tb.innerHTML='<tr><td colspan="4"><div class="empty-state"><div class="empty-icon">👥</div><p>Belum ada data insentif</p></div></td></tr>';
+    return;
+  }
+  tb.innerHTML = committee.map(c=>`<tr>
+    <td><strong>${c.name}</strong></td>
+    <td style="color:var(--text2)">${c.role||'—'}</td>
+    <td class="mono" style="color:var(--red)">${rp(c.amount)}</td>
+    <td>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-secondary btn-sm" onclick="editCommittee('${c.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCommittee('${c.id}')">🗑️</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function openAddCommittee() {
+  document.getElementById('editCommitteeId').value='';
+  document.getElementById('addCommitteeTitle').textContent='Tambah Insentif Panitia';
+  document.getElementById('committeeName').value='';
+  document.getElementById('committeeRole').value='';
+  document.getElementById('committeeAmount').value='';
+  openModal('addCommitteeModal');
+}
+
+function editCommittee(id) {
+  const c = committee.find(x=>x.id===id); if(!c) return;
+  document.getElementById('editCommitteeId').value=id;
+  document.getElementById('addCommitteeTitle').textContent='Edit Insentif';
+  document.getElementById('committeeName').value=c.name;
+  document.getElementById('committeeRole').value=c.role||'';
+  document.getElementById('committeeAmount').value=c.amount;
+  openModal('addCommitteeModal');
+}
+
+async function saveCommittee() {
+  if (!currentTournamentId) return;
+  const id     = document.getElementById('editCommitteeId').value;
+  const name   = document.getElementById('committeeName').value.trim();
+  const role   = document.getElementById('committeeRole').value.trim();
+  const amount = Number(document.getElementById('committeeAmount').value);
+  if (!name||!amount) { showToast('Nama dan nominal wajib diisi.','error'); return; }
+  const payload = { tournament_id:currentTournamentId, name, role, amount };
+  let res;
+  if (id) res = await sbFetch(`committee_incentives?id=eq.${id}`,'PATCH',payload);
+  else    res = await sbFetch('committee_incentives','POST',{...payload,created_at:new Date().toISOString()});
+  if (res===null) { showToast('Gagal menyimpan.','error'); return; }
+  closeModal('addCommitteeModal');
+  showToast(id?'Insentif diperbarui ✅':'Insentif ditambahkan ✅','success');
+  await loadAllData();
+}
+
+async function deleteCommittee(id) {
+  if(!confirm('Hapus insentif ini?')) return;
+  await sbFetch(`committee_incentives?id=eq.${id}`,'DELETE');
+  showToast('Insentif dihapus.','info');
+  await loadAllData();
+}
+
+// ═══════════════════════════════════════════════
+//  PENGATURAN
+// ═══════════════════════════════════════════════
+async function testConnection() {
+  const url = document.getElementById('settingUrl').value.trim();
+  const key = document.getElementById('settingKey').value.trim();
+  const st  = document.getElementById('connStatus');
+  if (!url||!key) { showStatus(st,'❌ Isi URL dan Key dulu.','error'); return; }
+  const old_url = _sbUrl, old_key = _sbKey;
+  _sbUrl=url; _sbKey=key;
+  showStatus(st,'⏳ Mengetes...','warning');
+  const res = await sbFetch('tournaments','GET',null,'?limit=1');
+  if (res===null) {
+    _sbUrl=old_url; _sbKey=old_key;
+    showStatus(st,'❌ Koneksi gagal.','error');
+  } else {
+    showStatus(st,'✅ Koneksi berhasil!','success');
+    if (_cryptoKey) { await encryptAndSave(url, key); }
+  }
+}
+
+async function encryptAndSave(url, key) {
+  localStorage.setItem(URL_KEY,  await encryptStr(_cryptoKey, url));
+  localStorage.setItem(AKEY_KEY, await encryptStr(_cryptoKey, key));
+}
+
+async function changePassword() {
+  const old  = document.getElementById('oldPwd').value;
+  const np   = document.getElementById('newPwd').value;
+  const np2  = document.getElementById('newPwd2').value;
+  const st   = document.getElementById('pwdStatus');
+  if (!old||!np||!np2) { showStatus(st,'❌ Semua field wajib diisi.','error'); return; }
+  if (np.length<6)     { showStatus(st,'❌ Password baru minimal 6 karakter.','error'); return; }
+  if (np!==np2)        { showStatus(st,'❌ Konfirmasi tidak cocok.','error'); return; }
+  try {
+    const salt = Uint8Array.from(atob(localStorage.getItem(SALT_KEY)), c=>c.charCodeAt(0));
+    const key  = await deriveKey(old, salt);
+    const chk  = await decryptStr(key, localStorage.getItem(CHECK_KEY));
+    if (chk!==SENTINEL) throw new Error('wrong');
+  } catch { showStatus(st,'❌ Password lama salah.','error'); return; }
+  await setupNewPassword(np, _sbUrl, _sbKey);
+  showStatus(st,'✅ Password berhasil diganti!','success');
+  showToast('Password diperbarui 🔐','success');
+}
+
+function saveTelegramConfig() {
+  const token  = document.getElementById('tgBotToken').value.trim();
+  const chatId = document.getElementById('tgChatId').value.trim();
+  const st     = document.getElementById('tgStatus');
+  if (!token||!chatId) { showStatus(st,'❌ Token dan Chat ID wajib diisi.','error'); return; }
+  localStorage.setItem('vk_tg_token', token);
+  localStorage.setItem('vk_tg_chat',  chatId);
+  showStatus(st,'✅ Konfigurasi Telegram disimpan!','success');
+  renderSqlCron();
+}
+
+async function testTelegram() {
+  const token  = document.getElementById('tgBotToken').value.trim() || localStorage.getItem('vk_tg_token');
+  const chatId = document.getElementById('tgChatId').value.trim()   || localStorage.getItem('vk_tg_chat');
+  const st     = document.getElementById('tgStatus');
+  if (!token||!chatId) { showStatus(st,'❌ Isi Bot Token dan Chat ID dulu.','error'); return; }
+  showStatus(st,'⏳ Mengirim pesan test...','warning');
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ chat_id: chatId, text: '🏐 *VoleyKas Test*\n\nKoneksi Telegram berhasil! Notifikasi rekap tiket akan dikirim setiap jam 04.00 pagi.', parse_mode:'Markdown' })
+    });
+    const data = await res.json();
+    if (data.ok) showStatus(st,'✅ Pesan berhasil dikirim! Cek Telegram Anda.','success');
+    else showStatus(st,`❌ Gagal: ${data.description}`,'error');
+  } catch { showStatus(st,'❌ Gagal mengirim. Periksa Bot Token.','error'); }
+}
+
+function renderSqlCron() {
+  const el = document.getElementById('sqlCronCode');
+  if (!el) return;
+  el.textContent = `-- 1. Enable pg_cron extension
+select cron.schedule(
+  'daily-ticket-report',
+  '0 4 * * *',         -- jam 04:00 setiap hari (WIB = UTC+7, sesuaikan)
+  $$
+    select
+      net.http_post(
+        url := 'https://<PROJECT_REF>.supabase.co/functions/v1/ticket-report',
+        headers := '{"Authorization":"Bearer <ANON_KEY>"}'::jsonb,
+        body := '{}'::jsonb
+      )
+  $$
+);
+
+-- 2. Deploy Edge Function: supabase/functions/ticket-report/index.ts
+-- Fungsi ini akan membaca ticket_daily hari sebelumnya dan
+-- mengirim ke Telegram Bot API dengan token & chat_id
+-- yang disimpan di Supabase Vault / environment variables.`;
+}
+
+// ═══════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════
+function navTo(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page)?.classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  if (window.innerWidth<=768) document.getElementById('sidebar').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if(e.target===m) m.classList.remove('open'); });
+});
+
+// ═══════════════════════════════════════════════
+//  UTILITIES
+// ═══════════════════════════════════════════════
+function rp(n) {
+  return 'Rp ' + (Number(n)||0).toLocaleString('id-ID');
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+}
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+function showToast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(), 3500);
+}
+function showStatus(el, msg, type) {
+  el.style.display='block';
+  el.className=`status-msg ${type}`;
+  el.textContent=msg;
+}
+function updateSyncBadge() {
+  const dot  = document.getElementById('syncDot');
+  const text = document.getElementById('syncText');
+  if (!dot) return;
+  if (navigator.onLine) {
+    dot.className='sync-dot online';
+    text.textContent='Online';
+  } else {
+    dot.className='sync-dot offline';
+    text.textContent='Offline';
+  }
+}
+
+// Load saved Telegram config
+window.addEventListener('load', () => {
+  const token  = localStorage.getItem('vk_tg_token');
+  const chatId = localStorage.getItem('vk_tg_chat');
+  if (token)  document.getElementById('tgBotToken').value = token;
+  if (chatId) document.getElementById('tgChatId').value   = chatId;
+});
+</script>
+</body>
+</html>
