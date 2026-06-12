@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ══════════════════════════════════════════
-   Baleasri Event — CLEAN WHITE FORMAL-SPORTY THEME
+   BALEASRI EVENT — CLEAN WHITE FORMAL-SPORTY THEME
    ══════════════════════════════════════════ */
 :root {
   --bg:        #f0f2f5;
@@ -20,15 +20,15 @@
   --text:      #1a1f2e;
   --text2:     #4a5168;
   --text3:     #8b92a8;
-  --accent:    #1a56db;
-  --accent-lt: #e8effd;
-  --accent-dk: #1246b5;
+  --accent:    #D97757;
+  --accent-lt: #FDF0EB;
+  --accent-dk: #B85C3A;
   --green:     #0d7a55;
   --green-lt:  #e6f5ef;
   --red:       #c0392b;
   --red-lt:    #fdecea;
-  --blue:      #1a56db;
-  --blue-lt:   #e8effd;
+  --blue:      #D97757;
+  --blue-lt:   #FDF0EB;
   --orange:    #d97706;
   --orange-lt: #fef3e2;
   --radius:    6px;
@@ -254,21 +254,21 @@ body{
 
 /* ── GRAND TOTAL ── */
 .grand-total-card{
-  background:#dce8fb;
-  border:1.5px solid #b3cff5;
+  background:#fde8dc;
+  border:1.5px solid #f5c3a8;
   border-radius:var(--radius-lg);
   padding:22px 28px;margin-bottom:20px;
   display:flex;align-items:center;justify-content:space-between;
   flex-wrap:wrap;gap:16px;
   position:relative;overflow:hidden;
-  box-shadow:0 4px 20px rgba(100,149,237,0.15);
+  box-shadow:0 4px 20px rgba(217,119,87,0.15);
 }
 .grand-total-card::before{
   content:'';
   position:absolute;right:-30px;top:-30px;
   width:140px;height:140px;
   border-radius:50%;
-  background:rgba(180,210,255,0.25);
+  background:rgba(255,190,160,0.25);
 }
 .grand-total-card::after{
   content:'🏐';
@@ -277,15 +277,15 @@ body{
 }
 .grand-total-label{
   font-family:var(--font);
-  font-size:.72rem;font-weight:700;color:#4a6fa5;
+  font-size:.72rem;font-weight:700;color:#a0532e;
   text-transform:uppercase;letter-spacing:1.2px;
 }
 .grand-total-value{
   font-family:var(--font);
-  font-size:2.2rem;font-weight:800;color:#1a3a6b;
+  font-size:2.2rem;font-weight:800;color:#6b2e1a;
   margin-top:4px;letter-spacing:.5px;
 }
-.grand-total-meta{font-size:.75rem;color:#6a8fc0;margin-top:5px;}
+.grand-total-meta{font-size:.75rem;color:#c07050;margin-top:5px;}
 
 /* ── TABLES ── */
 .table-wrap{overflow-x:auto;}
@@ -349,9 +349,9 @@ textarea.form-control{resize:vertical;min-height:80px;}
 }
 .btn-primary{
   background:var(--accent);color:#ffffff;
-  box-shadow:0 2px 8px rgba(26,86,219,0.25);
+  box-shadow:0 2px 8px rgba(217,119,87,0.25);
 }
-.btn-primary:hover{background:var(--accent-dk);box-shadow:0 2px 12px rgba(26,86,219,0.35);}
+.btn-primary:hover{background:var(--accent-dk);box-shadow:0 2px 12px rgba(217,119,87,0.35);}
 .btn-secondary{
   background:var(--surface);color:var(--text);
   border:1px solid var(--border);
@@ -513,7 +513,7 @@ textarea.form-control{resize:vertical;min-height:80px;}
 
 <!-- ══════════════ LOCK SCREEN ══════════════ -->
 <div id="lockScreen">
-  <div class="lock-logo">Voley<span>Kas</span></div>
+  <div class="lock-logo">Baleasri<span>Event</span></div>
   <div class="lock-card" id="lockCard">
     <h2>Masuk</h2>
     <p>Masukkan password untuk membuka aplikasi</p>
@@ -767,7 +767,7 @@ textarea.form-control{resize:vertical;min-height:80px;}
 <div id="app">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">Voley<span>Kas</span></div>
+    <div class="sidebar-logo">Baleasri<span>Event</span></div>
     <div class="sidebar-tournament">
       <label>Turnamen Aktif</label>
       <select class="tournament-select" id="tournamentSelect" onchange="switchTournament(this.value)">
