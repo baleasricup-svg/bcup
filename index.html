@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>Baleasri Sport — Keuangan Turnamen Bola Voli</title>
+<title>Baleasri Event — Keuangan Turnamen Bola Voli</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ══════════════════════════════════════════
-   VOLEYKAS — CLEAN WHITE FORMAL-SPORTY THEME
+   Baleasri Event — CLEAN WHITE FORMAL-SPORTY THEME
    ══════════════════════════════════════════ */
 :root {
   --bg:        #f0f2f5;
@@ -2058,7 +2058,7 @@ async function testTelegram() {
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ chat_id: chatId, text: '🏐 *VoleyKas Test*\n\nKoneksi Telegram berhasil! Notifikasi rekap tiket akan dikirim setiap jam 04.00 pagi.', parse_mode:'Markdown' })
+      body: JSON.stringify({ chat_id: chatId, text: '🏐 *Baleasri Event Test*\n\nKoneksi Telegram berhasil! Notifikasi rekap tiket akan dikirim setiap jam 04.00 pagi.', parse_mode:'Markdown' })
     });
     const data = await res.json();
     if (data.ok) showStatus(st,'✅ Pesan berhasil dikirim! Cek Telegram Anda.','success');
