@@ -64,7 +64,7 @@ body{
   flex-direction:column;gap:24px;
 }
 .lock-logo{
-  font-family:var(--font-cond);
+  font-family:var(--font);
   font-size:2.6rem;font-weight:800;letter-spacing:1px;
   color:var(--text);text-transform:uppercase;
 }
@@ -113,7 +113,7 @@ body{
 }
 .sidebar-logo{
   padding:20px 18px 16px;
-  font-family:var(--font-cond);
+  font-family:var(--font);
   font-size:1.3rem;font-weight:800;letter-spacing:1px;
   text-transform:uppercase;
   border-bottom:2px solid var(--accent);
@@ -188,7 +188,7 @@ body{
   border-bottom:1px solid var(--border);
 }
 .topbar-title{
-  font-family:var(--font-cond);
+  font-family:var(--font);
   font-size:1.5rem;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
   color:var(--text);
 }
@@ -242,7 +242,7 @@ body{
   text-transform:uppercase;letter-spacing:.8px;
 }
 .stat-value{
-  font-family:var(--font-cond);
+  font-family:var(--font);
   font-size:1.4rem;font-weight:700;margin-top:5px;letter-spacing:.3px;
   color:var(--text);
 }
@@ -254,38 +254,38 @@ body{
 
 /* ── GRAND TOTAL ── */
 .grand-total-card{
-  background:var(--accent);
-  border:none;
+  background:#dce8fb;
+  border:1.5px solid #b3cff5;
   border-radius:var(--radius-lg);
   padding:22px 28px;margin-bottom:20px;
   display:flex;align-items:center;justify-content:space-between;
   flex-wrap:wrap;gap:16px;
   position:relative;overflow:hidden;
-  box-shadow:0 4px 20px rgba(26,86,219,0.25);
+  box-shadow:0 4px 20px rgba(100,149,237,0.15);
 }
 .grand-total-card::before{
   content:'';
   position:absolute;right:-30px;top:-30px;
   width:140px;height:140px;
   border-radius:50%;
-  background:rgba(255,255,255,0.07);
+  background:rgba(180,210,255,0.25);
 }
 .grand-total-card::after{
   content:'🏐';
   position:absolute;right:24px;top:50%;transform:translateY(-50%);
-  font-size:3.5rem;opacity:.12;
+  font-size:3.5rem;opacity:.18;
 }
 .grand-total-label{
-  font-family:var(--font-cond);
-  font-size:.72rem;font-weight:700;color:rgba(255,255,255,0.75);
+  font-family:var(--font);
+  font-size:.72rem;font-weight:700;color:#4a6fa5;
   text-transform:uppercase;letter-spacing:1.2px;
 }
 .grand-total-value{
-  font-family:var(--font-cond);
-  font-size:2.2rem;font-weight:800;color:#ffffff;
+  font-family:var(--font);
+  font-size:2.2rem;font-weight:800;color:#1a3a6b;
   margin-top:4px;letter-spacing:.5px;
 }
-.grand-total-meta{font-size:.75rem;color:rgba(255,255,255,0.6);margin-top:5px;}
+.grand-total-meta{font-size:.75rem;color:#6a8fc0;margin-top:5px;}
 
 /* ── TABLES ── */
 .table-wrap{overflow-x:auto;}
@@ -305,7 +305,7 @@ tbody tr{border-bottom:1px solid var(--border);transition:background var(--trans
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover{background:var(--surface2);}
 tbody td{padding:10px 14px;color:var(--text2);}
-tbody td.mono{font-family:var(--mono);color:var(--text);font-size:.8rem;}
+tbody td.mono{font-family:var(--font);color:var(--text);font-size:.8rem;}
 tbody td strong{color:var(--text);font-weight:600;}
 .badge{
   display:inline-block;padding:2px 9px;
@@ -427,7 +427,7 @@ textarea.form-control{resize:vertical;min-height:80px;}
   flex:1;padding:8px 10px;
   background:var(--surface);border:1px solid var(--border);
   color:var(--text);border-radius:var(--radius);
-  font-family:var(--mono);font-size:1rem;font-weight:600;
+  font-family:var(--font);font-size:1rem;font-weight:600;
   text-align:center;
   transition:border-color var(--transition);
 }
@@ -978,7 +978,7 @@ textarea.form-control{resize:vertical;min-height:80px;}
           </div>
           <div class="ticket-input-card" style="background:var(--accent-lt);border-color:rgba(26,86,219,0.25);">
             <label>💰 Total Hari Ini</label>
-            <div style="font-size:1.5rem;font-weight:800;color:var(--accent);font-family:var(--font-cond);margin-top:8px;letter-spacing:.5px;" id="ticketDayTotal">Rp 0</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent);font-family:var(--font);margin-top:8px;letter-spacing:.5px;" id="ticketDayTotal">Rp 0</div>
             <div style="font-size:.75rem;color:var(--text3);margin-top:6px;font-weight:500;" id="ticketDayBreakdown">—</div>
           </div>
         </div>
@@ -1196,7 +1196,7 @@ textarea.form-control{resize:vertical;min-height:80px;}
           <div id="tgStatus" class="status-msg" style="display:none;"></div>
           <div style="margin-top:14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
             <div style="font-size:.72rem;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">SQL untuk Supabase (pg_cron + Edge Function)</div>
-            <pre id="sqlCronCode" style="font-family:var(--mono);font-size:.72rem;color:var(--text2);white-space:pre-wrap;line-height:1.6;"></pre>
+            <pre id="sqlCronCode" style="font-family:var(--font);font-size:.72rem;color:var(--text2);white-space:pre-wrap;line-height:1.6;"></pre>
           </div>
         </div>
       </div>
