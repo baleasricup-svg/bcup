@@ -1326,7 +1326,6 @@ async function doUnlock() {
     _cryptoKey = key;
     _sbUrl = await decryptStr(key, localStorage.getItem(URL_KEY));
     _sbKey = await decryptStr(key, localStorage.getItem(AKEY_KEY));
-    sessionStorage.setItem('vk_unlocked', '1');
     document.getElementById('lockScreen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     afterUnlock();
@@ -1368,6 +1367,10 @@ async function doSetup() {
 async function afterUnlock() {
   updateSyncBadge();
   renderSqlCron();
+  const settingUrlEl = document.getElementById('settingUrl');
+  const settingKeyEl = document.getElementById('settingKey');
+  if (settingUrlEl) settingUrlEl.value = _sbUrl;
+  if (settingKeyEl) settingKeyEl.value = _sbKey;
   await loadTournaments();
   if (currentTournamentId) {
     document.getElementById('tournamentSelect').value = currentTournamentId;
@@ -1590,7 +1593,8 @@ async function saveTx() {
 
 async function deleteTx(id) {
   if (!confirm('Hapus transaksi ini?')) return;
-  await sbFetch(`transactions?id=eq.${id}`,'DELETE');
+  const res = await sbFetch(`transactions?id=eq.${id}`,'DELETE');
+  if (res===null) { showToast('Gagal menghapus transaksi.','error'); return; }
   showToast('Transaksi dihapus.','info');
   await loadAllData();
 }
@@ -1755,14 +1759,16 @@ async function savePrice() {
 
 async function deletePrice(id) {
   if(!confirm('Hapus harga ini?')) return;
-  await sbFetch(`ticket_prices?id=eq.${id}`,'DELETE');
+  const res = await sbFetch(`ticket_prices?id=eq.${id}`,'DELETE');
+  if (res===null) { showToast('Gagal menghapus harga.','error'); return; }
   showToast('Harga dihapus.','info');
   await loadAllData();
 }
 
 async function deleteTicketDay(id) {
   if(!confirm('Hapus data tiket hari ini?')) return;
-  await sbFetch(`ticket_daily?id=eq.${id}`,'DELETE');
+  const res = await sbFetch(`ticket_daily?id=eq.${id}`,'DELETE');
+  if (res===null) { showToast('Gagal menghapus data tiket.','error'); return; }
   showToast('Data tiket dihapus.','info');
   await loadAllData();
 }
@@ -1844,7 +1850,8 @@ async function saveSponsor() {
 
 async function deleteSponsor(id) {
   if(!confirm('Hapus data sponsor ini?')) return;
-  await sbFetch(`sponsorships?id=eq.${id}`,'DELETE');
+  const res = await sbFetch(`sponsorships?id=eq.${id}`,'DELETE');
+  if (res===null) { showToast('Gagal menghapus sponsor.','error'); return; }
   showToast('Sponsor dihapus.','info');
   await loadAllData();
 }
@@ -1920,7 +1927,8 @@ async function saveTeam() {
 
 async function deleteTeam(id) {
   if(!confirm('Hapus data tim ini?')) return;
-  await sbFetch(`team_registrations?id=eq.${id}`,'DELETE');
+  const res = await sbFetch(`team_registrations?id=eq.${id}`,'DELETE');
+  if (res===null) { showToast('Gagal menghapus data tim.','error'); return; }
   showToast('Data tim dihapus.','info');
   await loadAllData();
 }
@@ -1988,7 +1996,8 @@ async function saveCommittee() {
 
 async function deleteCommittee(id) {
   if(!confirm('Hapus insentif ini?')) return;
-  await sbFetch(`committee_incentives?id=eq.${id}`,'DELETE');
+  const res = await sbFetch(`committee_incentives?id=eq.${id}`,'DELETE');
+  if (res===null) { showToast('Gagal menghapus insentif.','error'); return; }
   showToast('Insentif dihapus.','info');
   await loadAllData();
 }
@@ -2138,7 +2147,11 @@ function fmtDate(d) {
   return dt.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
 }
 function today() {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
 }
 function showToast(msg, type='info') {
   const el = document.createElement('div');
